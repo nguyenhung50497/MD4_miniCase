@@ -13,35 +13,40 @@ class HomeController {
             res.render('users/login', { error: error });
         };
         this.login = async (req, res) => {
-            if (req.body.username === 'admin' && req.body.password === 'admin') {
-                req.session.User = req.body;
-                res.redirect(301, '/home-logined');
+            let user = await this.userService.checkUser(req.body.username);
+            if (user) {
+                let comparePass = await bcrypt_1.default.compare(req.body.password, user.password);
+                if (comparePass) {
+                    req.session.User = user._id;
+                    if (user.role === 'admin') {
+                        res.redirect(301, '/home-logined');
+                    }
+                    else {
+                        res.redirect(301, '/home-customer');
+                    }
+                }
             }
             else {
-                let user = await this.userService.checkUser(req.body);
-                if (user) {
-                    req.session.User = user._id;
-                    res.redirect(301, '/home-customer');
-                }
-                else {
-                    req.flash('error', 'Wrong username or password');
-                    res.redirect(301, '/users/login');
-                }
+                req.flash('error', 'Wrong username!!!');
+                res.redirect(301, '/users/login');
             }
         };
         this.showFormRegister = async (req, res) => {
-            res.render('users/register');
+            let error = req.flash().error || [];
+            res.render('users/register', { error: error });
         };
         this.register = async (req, res) => {
             let username = await this.userService.checkUsername(req.body);
             if (username) {
+                req.flash('error', "Username is already exist!!!");
                 res.redirect(301, '/users/register');
             }
             else {
                 let passwordHash = await bcrypt_1.default.hash(req.body.password, 10);
                 let newUser = {
                     username: req.body.username,
-                    password: passwordHash
+                    password: passwordHash,
+                    role: 'user',
                 };
                 await this.userService.registerUser(newUser);
                 res.redirect(301, '/users/login');
@@ -76,7 +81,8 @@ class HomeController {
                     res.redirect(301, '/users/change-pass');
                 }
                 else {
-                    let newUser = await this.userService.changePassword(req.session.User, req.body.newPassword);
+                    let passwordHash = await bcrypt_1.default.hash(req.body.password, 10);
+                    let newUser = await this.userService.changePassword(req.session.User, passwordHash);
                     await req.session.destroy((err) => {
                         res.redirect(301, '/users/login');
                     });

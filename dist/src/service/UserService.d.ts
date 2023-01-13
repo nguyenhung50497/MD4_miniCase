@@ -3,7 +3,7 @@ declare class UserService {
     getAll: () => Promise<(import("mongoose").Document<unknown, any, import("../model/user").IUser> & import("../model/user").IUser & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
-    checkUser: (user: any) => Promise<import("mongoose").Document<unknown, any, import("../model/user").IUser> & import("../model/user").IUser & {
+    checkUser: (username: any) => Promise<import("mongoose").Document<unknown, any, import("../model/user").IUser> & import("../model/user").IUser & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     checkUsername: (user: any) => Promise<import("mongoose").Document<unknown, any, import("../model/user").IUser> & import("../model/user").IUser & {

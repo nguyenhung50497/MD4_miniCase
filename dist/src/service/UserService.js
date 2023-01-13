@@ -8,8 +8,8 @@ class UserService {
             let users = await user_1.User.find();
             return users;
         };
-        this.checkUser = async (user) => {
-            let userCheck = await user_1.User.findOne({ username: user.username, password: user.password });
+        this.checkUser = async (username) => {
+            let userCheck = await user_1.User.findOne({ username: username });
             if (!userCheck) {
                 return null;
             }
