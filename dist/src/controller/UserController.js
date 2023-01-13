@@ -1,0 +1,132 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const UserService_1 = __importDefault(require("../service/UserService"));
+const ProductService_1 = __importDefault(require("../service/ProductService"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
+class HomeController {
+    constructor() {
+        this.showFormLogin = async (req, res) => {
+            let error = req.flash().error || [];
+            res.render('users/login', { error: error });
+        };
+        this.login = async (req, res) => {
+            if (req.body.username === 'admin' && req.body.password === 'admin') {
+                req.session.User = req.body;
+                res.redirect(301, '/home-logined');
+            }
+            else {
+                let user = await this.userService.checkUser(req.body);
+                if (user) {
+                    req.session.User = user._id;
+                    res.redirect(301, '/home-customer');
+                }
+                else {
+                    req.flash('error', 'Wrong username or password');
+                    res.redirect(301, '/users/login');
+                }
+            }
+        };
+        this.showFormRegister = async (req, res) => {
+            res.render('users/register');
+        };
+        this.register = async (req, res) => {
+            let username = await this.userService.checkUsername(req.body);
+            if (username) {
+                res.redirect(301, '/users/register');
+            }
+            else {
+                let passwordHash = await bcrypt_1.default.hash(req.body.password, 10);
+                let newUser = {
+                    username: req.body.username,
+                    password: passwordHash
+                };
+                await this.userService.registerUser(newUser);
+                res.redirect(301, '/users/login');
+            }
+        };
+        this.logout = async (req, res) => {
+            await req.session.destroy((err) => {
+                console.log('Destroyed');
+                res.redirect(301, '/home');
+            });
+        };
+        this.showFormChangePassword = async (req, res) => {
+            if (req.session.User) {
+                let error = req.flash().error || [];
+                let user = await this.userService.findById(req.session.User);
+                res.render('users/changePassword', { user: user, error: error });
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
+        };
+        this.changePassword = async (req, res) => {
+            if (req.session.User) {
+                let user = await this.userService.checkUser(req.body);
+                let comparePass = await bcrypt_1.default.compare(req.body.password, req.body.newPassword);
+                if (!user) {
+                    req.flash('error', 'Old password is wrong!!!');
+                    res.redirect(301, '/users/change-pass');
+                }
+                else if (comparePass) {
+                    req.flash('error', "New password doesn't match!!!");
+                    res.redirect(301, '/users/change-pass');
+                }
+                else {
+                    let newUser = await this.userService.changePassword(req.session.User, req.body.newPassword);
+                    await req.session.destroy((err) => {
+                        res.redirect(301, '/users/login');
+                    });
+                }
+            }
+        };
+        this.orderProduct = async (req, res) => {
+            if (req.session.User) {
+                let user = await this.userService.findById(req.session.User);
+                let product = await ProductService_1.default.findById(req.params.id);
+                let cart = await this.userService.orderProduct(+req.body.quantity, req.params.id, req.session.User);
+                res.redirect(301, '/home-customer');
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
+        };
+        this.showFormCart = async (req, res) => {
+            let cart = await UserService_1.default.findCartByUser(req.session.User);
+            let sum = 0;
+            for (let i = 0; i < cart.length; i++) {
+                let product = await ProductService_1.default.findById(cart[i].product);
+                sum += cart[i].quantity * product.price;
+            }
+            res.render('users/cart', { cart: cart, sum: sum });
+        };
+        this.searchProduct = async (req, res) => {
+            let products = await ProductService_1.default.search(req.query.keyword);
+            res.status(200).json(products);
+        };
+        this.payOrder = async (req, res) => {
+            if (req.session.User) {
+                console.log(await UserService_1.default.changeStatusCart(req.session.User));
+                res.redirect(301, '/users/cart');
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
+        };
+        this.priceRange = async (req, res) => {
+            let products = await ProductService_1.default.priceRange(+req.body.start, +req.body.end);
+            console.log(products);
+            res.render('homeCustomer', { products: products });
+        };
+        this.priceRange1 = async (req, res) => {
+            let products = await ProductService_1.default.priceRange1(+req.query.keyword);
+            res.status(200).json(products);
+        };
+        this.userService = UserService_1.default;
+    }
+}
+exports.default = new HomeController();
+//# sourceMappingURL=UserController.js.map
