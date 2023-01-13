@@ -73,7 +73,7 @@ class UserService {
             }
             else {
                 for (let i = 0; i < cart.length; i++) {
-                    await cart_1.Cart.updateOne({ _id: cart[i]._id }, { status: 'bought' });
+                    await cart_1.Cart.updateOne({ _id: cart[i]._id }, { status: 'paid' });
                 }
                 return 'success';
             }
