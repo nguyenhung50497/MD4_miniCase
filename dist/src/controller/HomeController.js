@@ -16,12 +16,22 @@ class HomeController {
             res.render('products/create', { categories: categories });
         };
         this.showHomeLogined = async (req, res) => {
-            let products = await ProductService_1.default.getAll();
-            res.render('homeLogined', { products: products });
+            if (req.session.User) {
+                let products = await ProductService_1.default.getAll();
+                res.render('homeLogined', { products: products });
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
         };
         this.showHomeCustomer = async (req, res) => {
-            let products = await ProductService_1.default.getAll();
-            res.render('homeCustomer', { products: products });
+            if (req.session.User) {
+                let products = await ProductService_1.default.getAll();
+                res.render('homeCustomer', { products: products });
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
         };
         this.showFormCreate = async (req, res) => {
             if (req.session.User) {
@@ -30,7 +40,6 @@ class HomeController {
                 res.render('products/create', { categories: categories });
             }
             else {
-                console.log(3);
                 res.redirect(301, '/users/login');
             }
         };
@@ -82,8 +91,13 @@ class HomeController {
             }
         };
         this.showFormDelete = async (req, res) => {
-            let idDelete = req.params.id;
-            res.render('products/delete', { idDelete: idDelete });
+            if (req.session.User) {
+                let idDelete = req.params.id;
+                res.render('products/delete', { idDelete: idDelete });
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
         };
         this.deleteProduct = async (req, res) => {
             if (req.session.User) {
@@ -96,8 +110,13 @@ class HomeController {
             }
         };
         this.showFormDetail = async (req, res) => {
-            let product = await ProductService_1.default.findById(req.params.id);
-            res.render('products/detail', { product: product });
+            if (req.session.User) {
+                let product = await ProductService_1.default.findById(req.params.id);
+                res.render('products/detail', { product: product });
+            }
+            else {
+                res.redirect(301, '/users/login');
+            }
         };
         this.searchProduct = async (req, res) => {
             let products = await ProductService_1.default.search(req.body.search);

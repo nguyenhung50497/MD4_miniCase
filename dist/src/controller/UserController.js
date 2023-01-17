@@ -25,6 +25,10 @@ class HomeController {
                         res.redirect(301, '/home-customer');
                     }
                 }
+                else {
+                    req.flash('error', 'Wrong password!!!');
+                    res.redirect(301, '/users/login');
+                }
             }
             else {
                 req.flash('error', 'Wrong username!!!');
@@ -101,13 +105,24 @@ class HomeController {
             }
         };
         this.showFormCart = async (req, res) => {
-            let cart = await UserService_1.default.findCartByUser(req.session.User);
-            let sum = 0;
-            for (let i = 0; i < cart.length; i++) {
-                let product = await ProductService_1.default.findById(cart[i].product);
-                sum += cart[i].quantity * product.price;
+            if (req.session.User) {
+                let cart = await UserService_1.default.findCartByUser(req.session.User);
+                let sum = 0;
+                let paid = 0;
+                for (let i = 0; i < cart.length; i++) {
+                    let product = await ProductService_1.default.findById(cart[i].product);
+                    if (cart[i].status === 'buying') {
+                        sum += cart[i].quantity * product.price;
+                    }
+                    else {
+                        paid += cart[i].quantity * product.price;
+                    }
+                }
+                res.render('users/cart', { cart: cart, sum: sum, paid: paid });
             }
-            res.render('users/cart', { cart: cart, sum: sum });
+            else {
+                res.redirect(301, '/users/login');
+            }
         };
         this.searchProduct = async (req, res) => {
             let products = await ProductService_1.default.search(req.query.keyword);
@@ -115,7 +130,7 @@ class HomeController {
         };
         this.payOrder = async (req, res) => {
             if (req.session.User) {
-                console.log(await UserService_1.default.changeStatusCart(req.session.User));
+                await UserService_1.default.changeStatusCart(req.session.User);
                 res.redirect(301, '/users/cart');
             }
             else {

@@ -73,7 +73,7 @@ class ProductService {
                     }
                     return products;
                 default:
-                    return null;
+                    return products = await product_1.Product.find().populate('category');
             }
         };
     }

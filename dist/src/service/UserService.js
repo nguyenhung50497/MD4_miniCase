@@ -40,7 +40,7 @@ class UserService {
             return user_1.User.updateOne({ _id: id }, { password: newPassword });
         };
         this.orderProduct = async (quantity, product, user) => {
-            let cartCheck = await cart_1.Cart.findOne({ user: user, product: product });
+            let cartCheck = await cart_1.Cart.findOne({ status: 'buying', user: user, product: product });
             if (!cartCheck) {
                 let cart = {
                     status: 'buying',
